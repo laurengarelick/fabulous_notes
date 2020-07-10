@@ -1,42 +1,54 @@
-const express = require('express'); 
-const app = express();               //express().use()..... too long
-require('dotenv').config(); 
+//declare dependancies
+const express = require('express');
 const path = require('path');
-const db = require('./db/db.json');
 const fs = require('fs');
 
+
+//global variable for reading the db.json file
+const db = require('./db/db.json');
+
+//set up express app
 //whatever is in the environment variable PORT, or 3000 if there's nothing there
 const PORT = process.env.PORT || 3000;
-console.log(db);
-+
+const app = express();  
+
+//so the server and browser speak the same language
+app.use(express.urlencoded({ extended: true }))
 app.use(express.json());
+
+//serves the static folder to the browser from the beginning
 app.use(express.static('public'));
-app.get('/notes', (req,res)=>{
-    res.sendFile(path.join(__dirname, './public/notes.html')
-)})
-app.get('/api/notes', (req,res)=>{
-    res.json(db)
+
+//ROUTES
+
+app.get('/notes', (req, res) => {
+  res.sendFile(path.join(__dirname, './public/notes.html')
+  )
 })
-app.post('/api/notes', (req,res)=>{
-    db.push(req.body)
-    fs.writeFile('./db/db.json', JSON.stringify(db), (err)=> res.json(err||"success!") )
+app.get('/api/notes', (req, res) => {
+  res.json(db)
 })
-app.delete('/api/notes/:id', (req, res)=> {
-    res.push('db\db.json')
+app.post('/api/notes', (req, res) => {
+  console.log(req.body)
+  db.push(req.body)
+  fs.writeFile('./db/db.json', JSON.stringify(db), (err) => res.json(err || "success!"))
+})
+app.delete('/api/notes/:name', (req, res) => {
+  let id = req.params.name;
+//to remove from db which is our makeshift database in this assignment using the id from params
+  db.splice(id, 1)
+  fs.writeFile('./db/db.json', JSON.stringify(db), (err) => {
+    if (err) throw err;
+    res.send('success!')
+})
 })
 
-// app.get("/members/:password", (req,res)=>{
-//     if(req.params.password === process.env.SECRET_PASSWORD){
-//         res.sendFile(path.join(__dirname, './public/members.html'))
-//     }else{
-//         res.json('YOU CANT HAVE NONE!')
-//     }
-// })
-// db\db.json
-app.get('*', (req,res)=>{
-    res.sendFile(path.join(__dirname, './public/index.html'))
+app.get("/test/:param1?/:param2", (req,res)=> console.log("this is param1",req.params.param1, "this is param2", req.params.param2))
+//catch all get routes not previously specified
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, './public/index.html'))
 })
 
-app.listen(PORT,()=> console.log(`App is listening on port ${PORT}`))
+app.listen(PORT, () => console.log(`App is listening on port ${PORT}`))
 
 //{name: "kevin"}// {"name": "kevin"}
